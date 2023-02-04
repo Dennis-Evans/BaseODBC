@@ -33,30 +33,94 @@ connStr            &MSConnStrClType
 ! =========================================================
 construct          procedure()
 destruct           procedure(),virtual
-init               procedure(string serverName, string databaseName)
+
+! ------------------------------------------------------------
+! init's the various objects and assigns the connection string
+! object and the connection object
+! ------------------------------------------------------------
+init               procedure(string serverName, string databaseName),byte,proc
+
+! ------------------------------------------------------------
+! typical clean up, disposes the various objects
+! ------------------------------------------------------------
 kill               procedure()
-! public methods
-clearQuery         procedure(),virtual
-primeQuery         procedure(*IDynStr query)
-primeQuery         procedure(string query)
-! add columns for the query
-AddColumn          procedure(*long colPtr),sqlReturn,proc
-AddColumn          procedure(*string colPtr),sqlReturn,proc
-! add parameters for the query
-AddInParameter     procedure(*long colPtr),sqlReturn,proc
-! opens the connection
-connect            procedure()
-! closes the connection
-disconnect         procedure()
-! execute the query and fill the queue input
+! ------------------------------------------------------------
+! connects to the database
+! check the return value when calling, the connection may fail
+! ------------------------------------------------------------
+connect            procedure(),sqlReturn
+
+! ------------------------------------------------------------
+! disconnects from  the database
+! the return value can be check, but if the disconnect
+! fails things have gone south
+! ------------------------------------------------------------
+disconnect         procedure(),sqlReturn,proc
+
+! ------------------------------------------------------------
+! executes the query that was set up and fills the queue
+! input with the values from the result set
+! Note:  this will execute a query with or without parameters
+! there is seldom a valid reason to call a query without parameters
+! even if a dummy or place holder is used
+! ------------------------------------------------------------
 execQuery          procedure(*queue q)
-! protected methods
+
+! ------------------------------------------------------------
+! clears the columns, parameters and the sql statement in the
+! dynamic string.
+!
+! Note: Call this before setting up a query.  if not called
+! the columns and parameters from the previous query
+! may still be in the list
+! ------------------------------------------------------------
+clearQuery         procedure(),virtual
+
+! ------------------------------------------------------------
+! primes the dynamic string with the sql statement input
+! ------------------------------------------------------------
+primeQuery         procedure(*IDynStr query),virtual
+
+! ------------------------------------------------------------
+! primes the dynamic string with the sql statement input
+! ------------------------------------------------------------
+primeQuery         procedure(string query) !virtual
+
+! ------------------------------------------------------------
+! adds a string column to the query
+! ------------------------------------------------------------
+AddColumn          procedure(*long colPtr),sqlReturn,proc
+
+! ------------------------------------------------------------
+! adds an integer  column to the query
+! ------------------------------------------------------------
+AddColumn          procedure(*string colPtr),sqlReturn,proc
+
+! ------------------------------------------------------------
+! clears the columns queue
+! ------------------------------------------------------------
 clearColumns       procedure(),protected
-clearParameters    procedure(),protected
-! private methods
+
+! ------------------------------------------------------------
+! allocates the columns class if not crated and sets the flag
+! ------------------------------------------------------------
 allocateColumns    procedure(),private
-! parameters
+
+! ------------------------------------------------------------
+! adds an input integer parameter
+! ------------------------------------------------------------
+AddInParameter     procedure(*long colPtr),sqlReturn,proc
+
+! ------------------------------------------------------------
+! clears the parameters
+! ------------------------------------------------------------
+clearParameters    procedure(),protected
+
+! ------------------------------------------------------------
+! allocates the parameters class if not created and sets the flag
+! ------------------------------------------------------------
 AllocateParameters procedure(),private
+
   end ! class
 ! ======================================
   _EndOfInclude_

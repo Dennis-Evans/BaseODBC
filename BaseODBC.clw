@@ -10,6 +10,7 @@
   include('odbcColumnsCl.inc'),once
   include('odbcParamsCl.inc'),once
 
+!region set up clean up
 
 BaseODBC.construct procedure()
 
@@ -25,6 +26,9 @@ BaseODBC.construct procedure()
   return
 ! end constructor ---------------------------------------------------
 
+! ----------------------------------------------------
+! calls kill to dispose the objects
+! ----------------------------------------------------
 BaseODBC.destruct procedure() !virtual
 
   code
@@ -34,18 +38,28 @@ BaseODBC.destruct procedure() !virtual
   return
 ! end destructor ---------------------------------------------------
 
+! ------------------------------------------------------------
+! init's the various objects and assigns the connection string
+! object and the connection object
+! ------------------------------------------------------------
 BaseODBC.init procedure(string srvName, string dbName)
+
+retv byte(level:Benign)
 
   code
 
   self.connStr.init(srvName, dbName)
   self.connStr.setTrustedConn(true)
+
   self.conn.init(self.connStr)
   self.odbc.init(self.conn)
 
-  return
+  return retv
 ! end init ---------------------------------------------------------
 
+! ------------------------------------------------------------
+! typical clean up, disposes the various objects
+! ------------------------------------------------------------
 BaseODBC.kill procedure()
 
   code
@@ -57,16 +71,63 @@ BaseODBC.kill procedure()
   dispose(self.cols)
   dispose(self.params)
 
+  self.columnsAllocated = false
+  self.parametersAllocated = false
+
   return
 ! end kill ----------------------------------------------------------
 
+!endregion set up clean up
 
+!region connect disconnect
+
+! ------------------------------------------------------------
+! connects to the database
+! check the return value when calling, the connection may fail
+! ------------------------------------------------------------
+BaseODBC.connect procedure() !sqlReturn
+
+retv sqlReturn,auto
+
+   code
+
+  retV = self.conn.connect()
+
+   return retv
+! end connect -------------------------------------------------
+
+! ------------------------------------------------------------
+! disconnects from  the database
+! the return value can be check, but if the disconnect
+! fails things have gone south
+! ------------------------------------------------------------
+BaseODBC.disconnect procedure() !sqlReturn,proc
+
+retv sqlReturn,auto
+
+   code
+
+   retv = self.conn.disconnect()
+
+   return retv
+! end disconnect ----------------------------------------------
+
+!endregion connect disconnect
+
+!region query
+
+! ------------------------------------------------------------
+! executes the query that was set up and fills the queue
+! input with the values from the result set
+! ------------------------------------------------------------
 BaseODBC.execQuery procedure(*queue que)
 
-retv sqlReturn
+retv sqlReturn,auto
 
   code
 
+  ! checks t osee if any parameters were added, if not then
+  ! call execQuery/3
   if ((self.params &= null) or (self.params.HasParameters() = false))
     retv = self.odbc.execQuery(self.sqlCode, self.cols, que)
   else
@@ -76,22 +137,10 @@ retv sqlReturn
   return
 ! end execQuery ------------------------------------------------------
 
-BaseODBC.connect procedure()
-
-   code
-
-   self.conn.connect()
-
-   return
-
-BaseODBC.disconnect procedure()
-
-   code
-
-   self.conn.disconnect()
-
-   return
-
+! ------------------------------------------------------------
+! clears the columns, parameters and the sql statement in the
+! dynamic string
+! ------------------------------------------------------------
 BaseODBC.clearQuery procedure() !virtual
 
   code
@@ -106,15 +155,22 @@ BaseODBC.clearQuery procedure() !virtual
   return;
 ! end clearQuery ---------------------------------------
 
-BaseODBC.primeQuery procedure(*IDynStr query)
+! ------------------------------------------------------------
+! primes the dynamic string with the sql statement input
+! ------------------------------------------------------------
+BaseODBC.primeQuery procedure(*IDynStr query) !virtual
 
    code
 
    self.primeQuery(query.str())
 
    return
+! end primeQuery ---------------------------------------
 
-BaseODBC.primeQuery procedure(string  query)
+! ------------------------------------------------------------
+! primes the dynamic string with the sql statement input
+! ------------------------------------------------------------
+BaseODBC.primeQuery procedure(string  query) !virtual
 
   code
 
@@ -126,31 +182,49 @@ BaseODBC.primeQuery procedure(string  query)
    self.sqlCode.cat(query)
 
   return
+! end primeQuery ---------------------------------------
 
+!endregion query
+
+!region columns
+
+! ------------------------------------------------------------
+! adds a string column to the query
+! ------------------------------------------------------------
 BaseODBC.AddColumn procedure(*string colPtr) !,sqlReturn,proc
 
+retv sqlReturn,auto
+
   code
 
   if (self.columnsAllocated = false)
     self.allocateColumns()
   end
-  self.cols.addColumn(colPtr)
+  retv = self.cols.addColumn(colPtr)
 
-  return 0
+  return retv
 ! end AddColumn ----------------------------------------------------
 
+! ------------------------------------------------------------
+! adds an integer column to the query
+! ------------------------------------------------------------
 BaseODBC.AddColumn procedure(*long colPtr) !,sqlReturn,proc
 
+retv sqlReturn,auto
+
   code
 
   if (self.columnsAllocated = false)
     self.allocateColumns()
   end
-  self.cols.addColumn(colPtr)
+  retv = self.cols.addColumn(colPtr)
 
   return 0
 ! end AddColumn ----------------------------------------------------
 
+! ------------------------------------------------------------
+! clears the columns queue
+! ------------------------------------------------------------
 BaseODBC.clearColumns procedure() ! protected
 
   code
@@ -160,7 +234,11 @@ BaseODBC.clearColumns procedure() ! protected
   end
 
   return
+! end clearColumns --------------------------------------------
 
+! ------------------------------------------------------------
+! allocates the columns class if not crated and sets the flag
+! ------------------------------------------------------------
 BaseODBC.allocateColumns procedure() ! private
 
   code
@@ -171,7 +249,15 @@ BaseODBC.allocateColumns procedure() ! private
   self.columnsAllocated = true
 
   return
+! end allocateColumns ---------------------------------------
 
+!endregion columns
+
+!region parameters
+
+! ------------------------------------------------------------
+! clears the parameters
+! ------------------------------------------------------------
 BaseODBC.clearParameters procedure() ! protected
 
   code
@@ -181,20 +267,28 @@ BaseODBC.clearParameters procedure() ! protected
   end
 
   return
+! clearParameters ----------------------------------------------
 
-
+! ------------------------------------------------------------
+! adds an input integer parameter
+! ------------------------------------------------------------
 BaseODBC.AddInParameter  procedure(*long colPtr) !sqlReturn,proc
+
+retv sqlReturn,auto
 
   code
 
   if (self.parametersAllocated = false)
     self.AllocateParameters()
   end
-  self.params.addInParameter(colPtr)
+  retv = self.params.addInParameter(colPtr)
 
-  return 0
+  return retv
 ! end addParameter ------------------------------------------------
 
+! ------------------------------------------------------------
+! allocates the parameters class if not created and sets the flag
+! ------------------------------------------------------------
 BaseODBC.AllocateParameters procedure()
 
   code
@@ -207,3 +301,4 @@ BaseODBC.AllocateParameters procedure()
   return
 ! end AllocateParameters -------------------------------------------
 
+!endregion parameters
