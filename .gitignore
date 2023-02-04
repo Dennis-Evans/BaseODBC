@@ -1,0 +1,6 @@
+*.dll
+*.LOG
+DbDemoWin/map/
+DbDemoWin/obj/
+DbDemoWin/DbDemoWin.exe
+DbDemoWin/DbDemoWin.EXP
