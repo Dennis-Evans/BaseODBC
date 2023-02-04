@@ -1,8 +1,19 @@
 
   program
 
+  ! ====================================================================
+  ! simple example using the baseODBC object
+  !
+  ! the sln, CwProj and clw file are in the repo
+  !
+  ! currently only Windows Auth. is used, SQL Auth. will be added
+  !
+  ! set the server and database names in the variables
+  !
+  ! enter a query in the functions,
+  ! ====================================================================
+
   include('BaseODBC.inc'),once
-  !include('odbcTypes.inc'),once
 
    map
      main()
@@ -10,14 +21,17 @@
      execSimpleQueryWith()
    end
 
+! instance to use for the example
 odbcWorker &BaseODBC
 
-serverName   string('dennis-ltsag\srv_3_1_13')
-databaseName string('phd_Chey')
+! set the server name and database names here
+serverName   string('<your server name>')
+databaseName string('<your database name')
 
-q queue
-id long
-s  string(110)
+! example queue
+q  queue
+id   long
+s    string(80)
   end
 
   code
@@ -68,6 +82,9 @@ MyWindow WINDOW('Demo'),AT(,,385,126),CENTER,GRAY,FONT('MS Sans Serif',8,,FONT:r
   return
 ! end Main ===============================================================
 
+! =========================================================
+! execute a query without any  parameters, bad practice.
+! =========================================================
 execSimpleQuery procedure()
 
 retv sqlReturn,auto
@@ -76,20 +93,23 @@ retv sqlReturn,auto
 
   odbcWorker.clearQuery()
 
-  odbcWorker.primeQuery('select c.casecaseId, c.label from cases.cases c order by c.casecaseid;')
+  odbcWorker.primeQuery('<query with out parameters>')
   odbcWorker.addColumn(q.id)
   odbcWorker.addColumn(q.s)
 
   retv = odbcWorker.connect()
-  if (retv = Sql_Success) 
+  if (retv = Sql_Success)
     odbcWorker.execQuery(q)
   end
-  
+
   odbcWorker.Disconnect()
 
   return
 ! ------------------------------------------------------------------
 
+! =========================================================
+! execute a query with one or more parameters.
+! =========================================================
 execSimpleQueryWith procedure()
 
 retv sqlReturn,auto
@@ -101,17 +121,17 @@ endValue   long(12)
 
   odbcWorker.clearQuery()
 
-  odbcWorker.primeQuery('select c.caseCaseId, c.label from cases.cases c where ((c.caseCaseId >= ?) and (c.caseCaseId <= ?)) order by c.caseCaseId;')
+  odbcWorker.primeQuery('<query with out parameters>')
   odbcWorker.addColumn(q.id)
   odbcWorker.addColumn(q.s)
   odbcWorker.AddInParameter(beginValue)
   odbcWorker.AddInParameter(endValue)
 
   retv = odbcWorker.connect()
-  if (retv = Sql_Success) 
+  if (retv = Sql_Success)
     odbcWorker.execQuery(q)
   end
-  
+
   odbcWorker.Disconnect()
 
   return
