@@ -1,7 +1,7 @@
 !ABCIncludeFile
 
-  OMIT('_EndOfInclude_',_BaseODBPresent_)
-_BaseODBPresent_   EQUATE(1)
+  OMIT('_EndOfInclude_',_BaseODBCPresent_)
+_BaseODBCPresent_   EQUATE(1)
 
   include('odbcTypes.inc'),once
   include('odbcConnStrCl.inc'),once
@@ -9,7 +9,7 @@ _BaseODBPresent_   EQUATE(1)
   include('odbcCl.inc'),once
   include('odbcColumnsCl.inc'),once
   include('odbcParamsCl.inc'),once
-
+! -----------------------------------------------------------------
 
 BaseODBC        class,type,module('BaseODBC.clw'),link('BaseODBC.clw',_ABCLinkMode_),dll(_ABCDllMode_)
 ! flag to indicate the columns object has been allocated
@@ -64,16 +64,22 @@ disconnect         procedure(),sqlReturn,proc
 ! there is seldom a valid reason to call a query without parameters
 ! even if a dummy or place holder is used
 ! ------------------------------------------------------------
-execQuery          procedure(*queue q)
+execQuery          procedure(*queue q),sqlReturn
 
 ! ------------------------------------------------------------
-! clears the columns, parameters and the sql statement in the
-! dynamic string.
-!
-! Note: Call this before setting up a query.  if not called
-! the columns and parameters from the previous query
-! may still be in the list
+! executes the query that was set up and fills the group
+! input with the values from the result set
+! typically this result set will contain one row
 ! ------------------------------------------------------------
+execQuery          procedure(*group g),sqlReturn
+
+!!!<summary>
+!!! clears the columns, xxx parameters and the sql statement in the dynamic string.
+!!! Note: Call this before setting up a query.  
+!!! if not called
+!!! the columns and parameters from the previous query
+!!! may still be in the list
+!!!</summary>
 clearQuery         procedure(),virtual
 
 ! ------------------------------------------------------------
@@ -86,6 +92,13 @@ primeQuery         procedure(*IDynStr query),virtual
 ! ------------------------------------------------------------
 primeQuery         procedure(string query) !virtual
 
+! ------------------------------------------------------
+! checks for parameters on the query
+! if none then return false
+! if one or more parameters return true
+! ------------------------------------------------------
+queryHasParameters procedure(),bool,private
+
 ! ------------------------------------------------------------
 ! adds a string column to the query
 ! ------------------------------------------------------------
@@ -97,12 +110,20 @@ AddColumn          procedure(*long colPtr),sqlReturn,proc
 AddColumn          procedure(*string colPtr),sqlReturn,proc
 
 ! ------------------------------------------------------------
+! the remaining add column functions do the same work
+! as the long and string over loads, just for the specific
+! data type
+! ------------------------------------------------------------
+AddColumn      procedure(*real colPtr),sqlReturn,proc
+AddColumn      procedure(*TIMESTAMP_STRUCT colPtr),sqlReturn,proc
+
+! ------------------------------------------------------------
 ! clears the columns queue
 ! ------------------------------------------------------------
 clearColumns       procedure(),protected
 
 ! ------------------------------------------------------------
-! allocates the columns class if not crated and sets the flag
+! allocates the columns class if not created and sets the flag
 ! ------------------------------------------------------------
 allocateColumns    procedure(),private
 
@@ -110,6 +131,10 @@ allocateColumns    procedure(),private
 ! adds an input integer parameter
 ! ------------------------------------------------------------
 AddInParameter     procedure(*long colPtr),sqlReturn,proc
+! adds the parameters for the specific data type
+AddInParameter        procedure(*cstring colPtr),sqlReturn,proc
+AddInParameter        procedure(*real colPtr),sqlReturn,proc
+AddInParameter        procedure(*TIMESTAMP_STRUCT colPtr),sqlReturn,proc
 
 ! ------------------------------------------------------------
 ! clears the parameters

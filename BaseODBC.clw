@@ -126,21 +126,45 @@ retv sqlReturn,auto
 
   code
 
-  ! checks t osee if any parameters were added, if not then
-  ! call execQuery/3
-  if ((self.params &= null) or (self.params.HasParameters() = false))
+  ! checks to see if any parameters were added, if not then
+  ! call execQuery/4
+  if (self.queryHasParameters() = false)
     retv = self.odbc.execQuery(self.sqlCode, self.cols, que)
   else
     retv = self.odbc.execQuery(self.sqlCode, self.cols, self.params, que)
   end
 
-  return
+  return retv
 ! end execQuery ------------------------------------------------------
 
 ! ------------------------------------------------------------
-! clears the columns, parameters and the sql statement in the
-! dynamic string
+! executes the query that was set up and fills the group
+! input with the values from the result set
+! this result set will contain a single row
 ! ------------------------------------------------------------
+BaseODBC.execQuery procedure(*group g)
+
+retv sqlReturn,auto
+
+   code
+
+  ! checks to see if any parameters were added, if not then
+  ! call execQuery/4
+  if (self.queryHasParameters() = false)
+    retv = self.odbc.execQuery(self.sqlCode, self.cols, g)
+  else
+    retv = self.odbc.execQuery(self.sqlCode, self.cols, self.params, g)
+  end
+
+   return retv
+! end execQuery ------------------------------------------------------
+
+!!!<summary>
+!!! clears the columns, parameters and the sql statement in the dynamic string.
+!!! Note: Call this before setting up a query.  if not called
+!!! the columns and parameters from the previous query
+!!! may still be in the list
+!!!</summary>
 BaseODBC.clearQuery procedure() !virtual
 
   code
@@ -184,6 +208,26 @@ BaseODBC.primeQuery procedure(string  query) !virtual
   return
 ! end primeQuery ---------------------------------------
 
+! ------------------------------------------------------
+! checks for parameters on the query
+! if none then return false
+! if one or more parameters return true
+! ------------------------------------------------------
+BaseODBC.queryHasParameters procedure() !,bool,private
+
+retv bool,auto
+
+  code
+
+  if ((self.params &= null) or (self.params.HasParameters() = false))
+    retv = false
+  else
+    retv = true
+  end
+
+  return retv
+! end queryHasParameters --------------------------------
+
 !endregion query
 
 !region columns
@@ -219,7 +263,40 @@ retv sqlReturn,auto
   end
   retv = self.cols.addColumn(colPtr)
 
-  return 0
+  return retv
+! end AddColumn ----------------------------------------------------
+
+! ------------------------------------------------------------
+! the remaining add column functions do the same work
+! as the long and string over loads, just for the specific
+! data type
+! ------------------------------------------------------------
+BaseODBC.AddColumn procedure(*real colPtr) !sqlReturn,proc
+
+retv sqlReturn,auto
+
+  code
+
+  if (self.columnsAllocated = false)
+    self.allocateColumns()
+  end
+  retv = self.cols.addColumn(colPtr)
+
+  return retv
+! end AddColumn ----------------------------------------------------
+
+BaseODBC.AddColumn procedure(*TIMESTAMP_STRUCT colPtr) !sqlReturn,proc
+
+retv sqlReturn,auto
+
+  code
+
+  if (self.columnsAllocated = false)
+    self.allocateColumns()
+  end
+  retv = self.cols.addColumn(colPtr)
+
+  return retv
 ! end AddColumn ----------------------------------------------------
 
 ! ------------------------------------------------------------
@@ -273,6 +350,49 @@ BaseODBC.clearParameters procedure() ! protected
 ! adds an input integer parameter
 ! ------------------------------------------------------------
 BaseODBC.AddInParameter  procedure(*long colPtr) !sqlReturn,proc
+
+retv sqlReturn,auto
+
+  code
+
+  if (self.parametersAllocated = false)
+    self.AllocateParameters()
+  end
+  retv = self.params.addInParameter(colPtr)
+
+  return retv
+! end addParameter ------------------------------------------------
+
+! adds the parameters for the specific type
+BaseODBC.AddInParameter procedure(*cstring colPtr) !sqlReturn,proc
+
+retv sqlReturn,auto
+
+  code
+
+  if (self.parametersAllocated = false)
+    self.AllocateParameters()
+  end
+  retv = self.params.addInParameter(colPtr)
+
+  return retv
+! end addParameter ------------------------------------------------
+
+BaseODBC.AddInParameter procedure(*real colPtr) !sqlReturn,proc
+
+retv sqlReturn,auto
+
+  code
+
+  if (self.parametersAllocated = false)
+    self.AllocateParameters()
+  end
+  retv = self.params.addInParameter(colPtr)
+
+  return retv
+! end addParameter ------------------------------------------------
+
+BaseODBC.AddInParameter procedure(*TIMESTAMP_STRUCT colPtr) !sqlReturn,proc
 
 retv sqlReturn,auto
 
