@@ -5,7 +5,7 @@ The BaseODBC object is a helper class, wrapper class what ever label you want to
 the DbDemoWin directory contains a small, simple example using the class.  There is a .sln file, a .cwproj file, a .clw file and a .lib file for the driver. 
 
 The lib file was created using ODBC 13.  Use libmaker.exe to create a .lib file for what ever version of the driver you are using.  
-If using SQL Sever Native Client, any version, leave out the OleDb functions.  Adding them would not cause any harm but they are not used or needed.
+If using SQL Sever Native Client, any version, stop.  Move t oODBC 11 or newer.
 
 Additional data types will be added for the AddColumn and AddParameters.  If needed you can always add the additional types and push the changes back into the repository.
 
